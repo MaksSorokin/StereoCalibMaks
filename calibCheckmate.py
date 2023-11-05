@@ -13,7 +13,8 @@ def calibrate_camera(images_folder, rows, columns, world_scaling, camNumber):
     for image in images:
         gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         binImage = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)[1]
-        binImage = cv.blur(binImage, (3,3))
+        #binImage = cv.blur(binImage, (3,3))
+        #binImage = gray
         binImages.append(binImage)
         #cv.imshow("image", binImage)
         #cv.waitKey(0)
@@ -48,12 +49,12 @@ def calibrate_camera(images_folder, rows, columns, world_scaling, camNumber):
         if ret == True:
  
             #Convolution size used to improve corner detection. Don't make this too large.
-            conv_size = (11, 11)
+            conv_size = (23, 23)
  
             #opencv can attempt to improve the checkerboard coordinates
             corners = cv.cornerSubPix(gray, corners, conv_size, (-1, -1), criteria)
-            #cv.drawChessboardCorners(frame, (rows,columns), corners, ret)
-            #cv.imshow('img', frame)
+            cv.drawChessboardCorners(frame, (rows,columns), corners, ret)
+            cv.imshow('img', frame)
             k = cv.waitKey(0)
  
             objpoints.append(objp)
@@ -147,12 +148,12 @@ def stereo_calibrate(mtx1, dist1, mtx2, dist2, frames_folder1, frames_folder2, r
             corners1 = cv.cornerSubPix(gray1, corners1, (11, 11), (-1, -1), criteria)
             corners2 = cv.cornerSubPix(gray2, corners2, (11, 11), (-1, -1), criteria)
  
-            cv.drawChessboardCorners(frame1, (rows,columns), corners1, c_ret1)
-            cv.imshow('img', frame1)
+            #cv.drawChessboardCorners(frame1, (rows,columns), corners1, c_ret1)
+            #cv.imshow('img', frame1)
  
-            cv.drawChessboardCorners(frame2, (rows,columns), corners2, c_ret2)
-            cv.imshow('img2', frame2)
-            k = cv.waitKey(0)
+            #cv.drawChessboardCorners(frame2, (rows,columns), corners2, c_ret2)
+            #cv.imshow('img2', frame2)
+            #k = cv.waitKey(0)
  
             objpoints.append(objp)
             imgpoints_left.append(corners1)
@@ -180,18 +181,68 @@ def triangulate (mtx1, mtx2, cam1Points, cam2Points, R, T):
             #[752, 488], [711, 605], [549, 651],
             #[651, 663], [526, 293], [542, 290]]
     
-    uvs1 = np.load(cam1Points)
-    uvs2 = np.load(cam2Points)
-    uvs1List = [x[0] for x in uvs1]
-    uvs2List = [x[0] for x in uvs2]
-    uvs1 = np.array(uvs1List)
-    uvs2 = np.array(uvs2List)
+    #uvs1 = np.load(cam1Points)
+    #uvs2 = np.load(cam2Points)
+    #uvs1List = [x[0] for x in uvs1]
+    #uvs2List = [x[0] for x in uvs2]
+    #uvs1 = np.array(uvs1List)
+    #uvs2 = np.array(uvs2List)
 
-
+    #for file.txt:
  
+    # Open the file in read mode
+    with open(cam1Points, 'r') as file:
+        # Read all lines from the file
+        lines = file.readlines()
+
+    # Create an empty array with the desired shape
+    uvs1 = np.zeros((2, len(lines)))
+
+    # Iterate through each line and extract the two numbers
+    for i, line in enumerate(lines):
+        # Split the line into two numbers
+        numbers = line.strip().split(' ')
+    
+        # Store the two numbers in the array
+        uvs1[0, i] = float(numbers[0])
+        uvs1[1, i] = float(numbers[1])
+
+    with open(cam2Points, 'r') as file:
+            # Read all lines from the file
+            lines = file.readlines()
+
+        # Create an empty array with the desired shape
+    uvs2 = np.zeros((2, len(lines)))
+
+        # Iterate through each line and extract the two numbers
+    for i, line in enumerate(lines):
+        # Split the line into two numbers
+        numbers = line.strip().split(' ')
+        
+        # Store the two numbers in the array
+        uvs2[0, i] = float(numbers[0])
+        uvs2[1, i] = float(numbers[1])
+
+    uvs10 = []
+    uvs20 = []
+
+    for i in range(uvs1.shape[1]):
+        uvs10.append([uvs1[0][i], uvs1[1][i]])
+    for i in range(uvs1.shape[1]):
+        uvs20.append([uvs2[0][i], uvs2[1][i]])
+    
+    uvs1 = uvs10
+    uvs2 = uvs20
+    uvs1 = np.array(uvs1)
+    uvs2 = np.array(uvs2)
+    # Print the array
+    print(uvs10)
+    
+    uvs1 = np.array(uvs1)
     frame1 = cv.imread('imgCheckmate\\cam1b\\1dz20.bmp')
     frame2 = cv.imread('imgCheckmate\\cam2b\\2dz20.bmp')
- 
+    
+    
     plt.imshow(frame1[:,:,[2,1,0]])
     plt.scatter(uvs1[:,0], uvs1[:,1])
     plt.show() #this call will cause a crash if you use cv.imshow() above. Comment out cv.imshow() to see this.
@@ -356,3 +407,84 @@ def featureMatch(imageName1, imageName2):
     cv.imwrite("matched_images.jpg", matched_img)
     cv.waitKey(0)
     cv.destroyAllWindows()
+
+
+def calibrate_cameraCircle(images_folder, rows, columns, world_scaling, camNumber):
+    images_names = glob.glob(images_folder)
+    images = []
+    for imname in images_names:
+        im = cv.imread(imname, 1)
+        images.append(im)
+    binImages = []
+    for image in images:
+        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        #binImage = cv.threshold(gray,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)[1]
+        #binImage = cv.blur(binImage, (3,3))
+        binImage = gray
+        binImages.append(binImage)
+        cv.imshow("image", binImage)
+        cv.waitKey(0)
+ 
+    #criteria used by checkerboard pattern detector.
+    #Change this if the code can't find the checkerboard
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+ 
+ 
+    #coordinates of squares in the checkerboard world space
+    objp = np.zeros((rows*columns,3), np.float32)
+    objp[:,:2] = np.mgrid[0:rows,0:columns].T.reshape(-1,2)
+    objp = world_scaling* objp
+ 
+    #frame dimensions. Frames should be the same size.
+    width = images[0].shape[1]
+    height = images[0].shape[0]
+ 
+    #Pixel coordinates of checkerboards
+    imgpoints = [] # 2d points in image plane.
+ 
+    #coordinates of the checkerboard in checkerboard world space.
+    objpoints = [] # 3d point in real world space
+ 
+    flagWriteCorn = 0
+    for frame in binImages:
+        #gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        gray = frame
+        #find the checkerboard
+        params = cv.SimpleBlobDetector_Params()
+        params.maxArea = 10000
+        detector = cv.SimpleBlobDetector_create(params)
+        ret, corners = cv.findCirclesGrid(gray, (rows, columns),None, None, detector)
+ 
+        if ret == True:
+ 
+            #Convolution size used to improve corner detection. Don't make this too large.
+            conv_size = (11, 11)
+ 
+            #opencv can attempt to improve the checkerboard coordinates
+            corners = cv.cornerSubPix(gray, corners, conv_size, (-1, -1), criteria)
+            cv.drawChessboardCorners(frame, (rows,columns), corners, ret)
+            cv.imshow('img', frame)
+            k = cv.waitKey(0)
+ 
+            objpoints.append(objp)
+            imgpoints.append(corners)
+            print("corners:")
+            print(np.shape(corners))
+            #with open(str(flagWriteCorn) + str(camNumber) + "corners.txt", "w") as fp:
+                #for item in corners:
+                    ## write each item on a new line
+                    #fp.write("%s\n" % item[0])
+            np.save(str(flagWriteCorn) + str(camNumber) + "cornersCircle", corners)
+        flagWriteCorn +=1
+    
+    
+ 
+ 
+    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, (width, height), None, None)
+    print('rmse:', ret)
+    print('camera matrix:\n', mtx)
+    print('distortion coeffs:', dist)
+    print('Rs:\n', rvecs)
+    print('Ts:\n', tvecs)
+ 
+    return mtx, dist
