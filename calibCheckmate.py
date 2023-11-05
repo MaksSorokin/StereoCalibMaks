@@ -252,3 +252,107 @@ def triangulate (mtx1, mtx2, cam1Points, cam2Points, R, T):
     ax.set_title('This figure can be rotated.')
     #uncomment to see the triangulated pose. This may cause a crash if youre also using cv.imshow() above.
     plt.show()
+
+
+def flannBasedMatcher(image1, image2):
+
+    img1 = cv.imread(image1, cv.IMREAD_GRAYSCALE)
+    img2 = cv.imread(image2, cv.IMREAD_GRAYSCALE)
+    # Initiate SIFT detector
+    sift = cv.SIFT_create()
+    # find the keypoints and descriptors with SIFT
+    kp1, des1 = sift.detectAndCompute(img1,None)
+    kp2, des2 = sift.detectAndCompute(img2,None)
+    img4=cv.drawKeypoints(img1, kp1, img1)
+    img5=cv.drawKeypoints(img2, kp2, img2)
+    # FLANN parameters
+    # BFMatcher with default params
+    bf = cv.BFMatcher()
+    matches = bf.knnMatch(des1,des2,k=2)
+    # Apply ratio test
+    good = []
+    for m,n in matches:
+        if m.distance < 0.5*n.distance:
+            good.append([m])
+    # cv.drawMatchesKnn expects list of lists as matches.
+    img3 = cv.drawMatchesKnn(img1,kp1,img2,kp2,good,None,flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+    #plt.imshow(img3)
+    plt.imshow(img4)
+    plt.imshow(img5)
+    plt.show()
+
+
+def findCircle(imageName):
+    # Load image 
+    image = cv.imread(imageName, 0) 
+  
+    # Set our filtering parameters 
+    # Initialize parameter setting using cv.SimpleBlobDetector 
+    params = cv.SimpleBlobDetector_Params() 
+  
+    # Set Area filtering parameters 
+    params.filterByArea = False
+    params.minArea = 100
+  
+    # Set Circularity filtering parameters 
+    params.filterByCircularity = False 
+    params.minCircularity = 0.1
+  
+    # Set Convexity filtering parameters 
+    params.filterByConvexity = False
+    params.minConvexity = 0.2
+        
+    # Set inertia filtering parameters 
+    params.filterByInertia = False
+    params.minInertiaRatio = 0.01
+    
+    # Create a detector with the parameters 
+    detector = cv.SimpleBlobDetector_create(params) 
+        
+    # Detect blobs 
+    keypoints = detector.detect(image) 
+    
+    # Draw blobs on our image as red circles 
+    blank = np.zeros((1, 1))  
+    blobs = cv.drawKeypoints(image, keypoints, blank, (0, 0, 255), 
+                            cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS) 
+    
+    number_of_blobs = len(keypoints) 
+    text = "Number of Circular Blobs: " + str(len(keypoints)) 
+    cv.putText(blobs, text, (20, 550), 
+                cv.FONT_HERSHEY_SIMPLEX, 1, (0, 100, 255), 2) 
+    
+    # Show blobs 
+    cv.imshow("Filtering Circular Blobs Only", blobs) 
+    cv.waitKey(0) 
+    cv.destroyAllWindows() 
+
+
+def featureMatch(imageName1, imageName2):
+    # read the images
+    img1 = cv.imread(imageName1)  
+    img2 = cv.imread(imageName2)
+
+    # convert images to grayscale
+    img1 = cv.cvtColor(img1, cv.COLOR_BGR2GRAY)
+    img2 = cv.cvtColor(img2, cv.COLOR_BGR2GRAY)
+
+    # create SIFT object
+    sift = cv.xfeatures2d.SIFT_create()
+    # detect SIFT features in both images
+    keypoints_1, descriptors_1 = sift.detectAndCompute(img1,None)
+    keypoints_2, descriptors_2 = sift.detectAndCompute(img2,None)
+    # create feature matcher
+    bf = cv.BFMatcher(cv.NORM_L1, crossCheck=True)
+    # match descriptors of both images
+    matches = bf.match(descriptors_1,descriptors_2)
+    # sort matches by distance
+    matches = sorted(matches, key = lambda x:x.distance)
+    # draw first 50 matches
+    matched_img = cv.drawMatches(img1, keypoints_1, img2, keypoints_2, matches[:50], img2, flags=2)
+    # show the image
+    cv.imshow('image', matched_img)
+    # save the image
+    cv.imwrite("matched_images.jpg", matched_img)
+    cv.waitKey(0)
+    cv.destroyAllWindows()

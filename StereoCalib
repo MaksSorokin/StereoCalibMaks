@@ -1,13 +1,20 @@
 import cv2 as cv
 import glob
 import numpy as np
-from calibCheckmate import calibrate_camera, stereo_calibrate, triangulate
+from calibCheckmate import *
+from StereoREc import *
 
 print("cam1:")
-mtx1, dist1 = calibrate_camera(images_folder="imgCheckmate\\cam1b\\*.bmp", rows=6, columns=6, world_scaling=14, camNumber=1)
+#mtx1, dist1 = calibrate_camera(images_folder="imgCheckmate\\cam1b\\*.bmp", rows=6, columns=6, world_scaling=14, camNumber=1)
 print("cam2:")
-mtx2, dist2 = calibrate_camera(images_folder="imgCheckmate\\cam2b\\*.bmp", rows=6, columns=6, world_scaling=14, camNumber=2)
-print("stereocalib:")
-R, T = stereo_calibrate(mtx1, dist1, mtx2, dist2, frames_folder1='imgCheckmate\\cam1b\\*.bmp',frames_folder2='imgCheckmate\\cam2b\\*.bmp', rows=6, columns=6, world_scaling=14)
+#mtx2, dist2 = calibrate_camera(images_folder="imgCheckmate\\cam2b\\*.bmp", rows=6, columns=6, world_scaling=14, camNumber=2)
+print("stereocalib:") 
+#R, T = stereo_calibrate(mtx1, dist1, mtx2, dist2, frames_folder1='imgCheckmate\\cam1b\\*.bmp',frames_folder2='imgCheckmate\\cam2b\\*.bmp', rows=6, columns=6, world_scaling=14)
 
-triangulate (mtx1=mtx1, mtx2=mtx2, cam1Points="01corners.npy", cam2Points="02corners.npy", R=R, T=T)
+#triangulate (mtx1=mtx1, mtx2=mtx2, cam1Points="11corners.npy", cam2Points="12corners.npy", R=R, T=T)
+
+#flannBasedMatcher(image1="imgCheckmate\\trianBotl\\1.bmp", image2="imgCheckmate\\trianBotl\\2.bmp")
+#findCircle(imageName="imgCheckmate\\trianBotl\\1.bmp")
+#featureMatch(imageName1="imgCheckmate\\trianBotl\\1.bmp", imageName2="id:\MLC\SuperGluePretrainedNetwork\match_pairs.pymgCheckmate\\trianBotl\\2.bmp")
+
+#plane_sweep_gauss(im_l='imgCheckmate\\cam1b\\1dz10.bmp', im_r='imgCheckmate\\cam2b\\2dz10.bmp', start=10, steps=8, wid=13)
